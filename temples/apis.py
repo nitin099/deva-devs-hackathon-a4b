@@ -10,8 +10,8 @@ from django.utils import timezone
 from datetime import timedelta
 from math import atan2
 from math import radians, sin, cos, sqrt, atan2
-from .models import User, Location, Temple, UserTempleCheckin
-from .serializers import UserSerializer, UserCreateSerializer, LocationSerializer, TempleSerializer, UserTempleCheckinSerializer
+from .models import User, Location, Temple, UserTempleCheckin, Reels
+from .serializers import UserSerializer, UserCreateSerializer, LocationSerializer, TempleSerializer, UserTempleCheckinSerializer, ReelsSerializer
 from django.core.cache import cache
 from django.conf import settings
 import hashlib
@@ -411,7 +411,7 @@ class GetUserTempleCheckIn(APIView):
                 'user__name'
             ).annotate(
                 checkin_count=Count('id')
-            ).order_by('-checkin_count')[:10]
+            ).order_by('-checkin_count')
             
             serializer = UserTempleCheckinSerializer(checkin)
             return Response({
@@ -424,8 +424,36 @@ class GetUserTempleCheckIn(APIView):
                 }
             })
         except Exception as e:
-            return Response(
-                {'msg': "Not found"},
-                status=status.HTTP_200_OK
-            )
+            # Get check-in counts even if user check-in not found
+            checkin_counts = UserTempleCheckin.objects.filter(
+                temple_id=temple_id
+            ).values(
+                'user_id',
+                'user__name'
+            ).annotate(
+                checkin_count=Count('id')
+            ).order_by('-checkin_count')
+            
+            return Response({
+                "data": {
+                    "user": None,
+                    "checkin_counts": list(checkin_counts),
+                    "checkin_enabled": True,
+                    "last_checkin_time": None,
+                    "next_checkin_available_after": None
+                }
+            }, status=status.HTTP_200_OK)
+
+
+class ListTempleReels(generics.ListAPIView):
+    serializer_class = ReelsSerializer
+    
+    def get_queryset(self):
+        temple_id = self.kwargs.get('pk')
+        return Reels.objects.filter(temple_id=temple_id).select_related('user', 'temple').order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
 

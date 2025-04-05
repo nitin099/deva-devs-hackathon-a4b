@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Location, Temple, UserTempleCheckin
+from .models import User, Location, Temple, UserTempleCheckin, Reels
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -69,4 +69,18 @@ class UserTempleCheckinSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserTempleCheckin
         fields = ('id', 'user', 'user_name', 'temple', 'temple_name', 'checkin_time', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at', 'checkin_time') 
+        read_only_fields = ('created_at', 'updated_at', 'checkin_time')
+
+
+class ReelsSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    temple_name = serializers.CharField(source='temple.name', read_only=True)
+    like_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Reels
+        fields = ('id', 'user', 'user_name', 'temple', 'temple_name', 'video_url', 'thumbnail', 'like_count', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
+
+    def get_like_count(self, obj):
+        return obj.reelslike_set.filter(like=True).count() 

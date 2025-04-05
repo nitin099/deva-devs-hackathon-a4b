@@ -17,13 +17,13 @@ urlpatterns = [
     path('temples/<int:pk>/check-ins', apis.ListCreateTempleCheckIn.as_view()),
     path('temples/<int:temple_id>/check-ins/<str:user_id>', apis.GetUserTempleCheckIn.as_view()),
     # path('temples/<int:pk>/yatra-complete', apis.MarkYatraComplete.as_view()),
-    #
-    # # Reels
-    # path('temples/<int:pk>/reels', apis.MarkYatraComplete.as_view()),
+    
+    # Reels
+    path('temples/<int:pk>/reels', apis.ListTempleReels.as_view()),
     # path('user/reels', apis.GetUserReels.as_view()),
     # path('reels/<int:pk>/like', apis.LikeReel.as_view()),
-    #
-    # # Location
+    
+    # Location
     path('locations', apis.LocationList.as_view()),
     path('locations/<int:pk>/', apis.LocationDetail.as_view()),
 
