@@ -13,6 +13,8 @@ class User(BaseModel):
 
 
 class Temple(BaseModel):
+    name = models.CharField(max_length=128, default=None)
+    google_place_id = models.CharField(max_length=512, default=None)
     srm = models.BooleanField(default=False)
     chadhava = models.BooleanField(default=False)
     puja = models.BooleanField(default=False)
@@ -21,9 +23,10 @@ class Temple(BaseModel):
     lng = models.FloatField(default=0.0)
     rating = models.FloatField(default=0.0)
     checkin_count = models.PositiveIntegerField(default=0)
+    raw_data = models.JSONField(default=None)
 
     def __str__(self):
-        return self.srm
+        return self.name
 
 
 class UserTempleCheckin(BaseModel):

@@ -11,7 +11,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Temple)
 class TempleAdmin(admin.ModelAdmin):
-    list_display = ('srm', 'chadhava', 'puja', 'yatra', 'lat', 'lng', 'rating', 'checkin_count', 'created_at')
+    list_display = ('name', 'srm', 'chadhava', 'puja', 'yatra', 'lat', 'lng', 'rating', 'checkin_count', 'google_place_id', 'created_at')
     list_filter = ('srm', 'chadhava', 'puja', 'yatra', 'created_at')
     search_fields = ('srm',)
     ordering = ('-created_at',)

@@ -112,10 +112,10 @@ class ListNearbyUsers(APIView):
             # Sort by distance
             nearby_users.sort(key=lambda x: x['distance'])
             
-            return Response({
+            return Response({"data": {
                 'count': len(nearby_users),
                 'results': nearby_users
-            }, status=status.HTTP_200_OK)
+            }}, status=status.HTTP_200_OK)
             
         except (ValueError, TypeError):
             return Response({
