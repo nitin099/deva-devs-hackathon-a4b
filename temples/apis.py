@@ -424,8 +424,8 @@ class GetUserTempleCheckIn(APIView):
                 next_checkin_time = recent_checkin.checkin_time + timedelta(hours=6)
                 hours_remaining = round((next_checkin_time - timezone.now()).total_seconds() / 3600, 1)
             
-            # Get check-in counts grouped by user for this temple
-            checkin_counts = UserTempleCheckin.objects.filter(
+            # Get all check-ins for this temple grouped by user
+            user_checkins = UserTempleCheckin.objects.filter(
                 temple_id=temple_id
             ).values(
                 'user_id',
@@ -438,15 +438,15 @@ class GetUserTempleCheckIn(APIView):
             return Response({
                 "data": {
                     "user": serializer.data,
-                    "checkin_counts": list(checkin_counts),
+                    "checkin_counts": list(user_checkins),
                     "checkin_enabled": not bool(recent_checkin),
                     "last_checkin_time": recent_checkin.checkin_time if recent_checkin else None,
-                    "next_checkin_available_after": hours_remaining 
+                    "next_checkin_available_after": hours_remaining
                 }
             })
         except Exception as e:
             # Get check-in counts even if user check-in not found
-            checkin_counts = UserTempleCheckin.objects.filter(
+            user_checkins = UserTempleCheckin.objects.filter(
                 temple_id=temple_id
             ).values(
                 'user_id',
@@ -458,7 +458,7 @@ class GetUserTempleCheckIn(APIView):
             return Response({
                 "data": {
                     "user": None,
-                    "checkin_counts": list(checkin_counts),
+                    "checkin_counts": list(user_checkins),
                     "checkin_enabled": True,
                     "last_checkin_time": None,
                     "next_checkin_available_after": None
