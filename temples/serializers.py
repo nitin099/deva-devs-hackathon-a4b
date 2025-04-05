@@ -46,6 +46,12 @@ class LocationSerializer(serializers.ModelSerializer):
 class TempleSerializer(serializers.ModelSerializer):
     distance = serializers.FloatField(required=False)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get('raw_data') and isinstance(data['raw_data'], dict):
+            data['raw_data'] = None
+        return data
+
     class Meta:
         model = Temple
         fields = ('id', 'name', 'srm', 'chadhava', 'puja', 'yatra', 
