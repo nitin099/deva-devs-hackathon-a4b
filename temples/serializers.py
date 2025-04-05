@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Location
+from .models import User, Location, Temple, UserTempleCheckin
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,4 +40,27 @@ class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ('id', 'user', 'user_name', 'lat', 'lng', 'created_at', 'updated_at')
-        read_only_fields = ('created_at', 'updated_at') 
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class TempleSerializer(serializers.ModelSerializer):
+    distance = serializers.FloatField(required=False)
+
+    class Meta:
+        model = Temple
+        fields = ('id', 'name', 'srm', 'chadhava', 'puja', 'yatra', 
+                 'lat', 'lng', 'rating', 'checkin_count', 'distance',
+                 'created_at', 'updated_at', 'raw_data')
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class UserTempleCheckinSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    temple = serializers.PrimaryKeyRelatedField(queryset=Temple.objects.all())
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    temple_name = serializers.CharField(source='temple.name', read_only=True)
+
+    class Meta:
+        model = UserTempleCheckin
+        fields = ('id', 'user', 'user_name', 'temple', 'temple_name', 'checkin_time', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at', 'checkin_time') 

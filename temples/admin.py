@@ -4,7 +4,7 @@ from .models import User, Temple, UserTempleCheckin, Reels, ReelsLike, Location
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('name', 'image', 'created_at', 'updated_at')
+    list_display = ('user_id', 'name', 'image', 'created_at', 'updated_at')
     search_fields = ('name',)
     list_filter = ('created_at', 'updated_at')
 

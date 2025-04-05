@@ -10,11 +10,12 @@ urlpatterns = [
     # Nearby
     path('nearby-users', apis.ListNearbyUsers.as_view()),
 
-    # path('nearby-temples', apis.ListNearbyTemples.as_view()),
+    path('nearby-temples', apis.ListNearbyTemples.as_view()),
 
     # Temples
     # path('temples/<int:pk>', apis.GetTemple.as_view()),
-    # path('temples/<int:pk>/check-in', apis.CreateTempleCheckIn.as_view()),
+    path('temples/<int:pk>/check-ins', apis.ListCreateTempleCheckIn.as_view()),
+    path('temples/<int:temple_id>/check-ins/<str:user_id>', apis.GetUserTempleCheckIn.as_view()),
     # path('temples/<int:pk>/yatra-complete', apis.MarkYatraComplete.as_view()),
     #
     # # Reels
