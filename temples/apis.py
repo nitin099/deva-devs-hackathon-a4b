@@ -324,6 +324,27 @@ class ListCreateTempleCheckIn(generics.ListCreateAPIView):
             queryset = queryset.filter(user_id=user_id)
             
         return queryset.order_by('-checkin_time')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Group check-ins by user and count
+        user_checkins = queryset.values(
+            'user',
+            'user__name'
+        ).annotate(
+            checkin_count=Count('id')
+        ).order_by('-checkin_count')
+        
+        # Get all check-ins for serialization
+        checkins = self.get_serializer(queryset, many=True).data
+        
+        return Response({
+            "data": {
+                "checkins": checkins,
+                "user_counts": list(user_checkins)
+            }
+        })
     
     def create(self, request, *args, **kwargs):
         try:
@@ -367,8 +388,8 @@ class ListCreateTempleCheckIn(generics.ListCreateAPIView):
                 
                 # Create the check-in
                 self.perform_create(serializer)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"data": serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({"data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response(
                 {'error': str(e)},
@@ -454,6 +475,22 @@ class ListTempleReels(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({"data": serializer.data})
+        
+        # Group reels by user and count
+        user_reels = queryset.values(
+            'user',
+            'user__name'
+        ).annotate(
+            reel_count=Count('id')
+        ).order_by('-reel_count')
+        
+        # Get all reels for serialization
+        reels = self.get_serializer(queryset, many=True).data
+        
+        return Response({
+            "data": {
+                "reels": reels,
+                "user_counts": list(user_reels)
+            }
+        })
 
