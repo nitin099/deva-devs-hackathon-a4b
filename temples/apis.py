@@ -417,14 +417,12 @@ class GetUserTempleCheckIn(APIView):
                 temple_id=temple_id,
                 checkin_time__gte=six_hours_ago
             ).first()
-            
             # Calculate hours remaining until next check-in
             hours_remaining = None
             if recent_checkin:
                 next_checkin_time = recent_checkin.checkin_time + timedelta(hours=6)
                 hours_remaining = round((next_checkin_time - timezone.now()).total_seconds() / 3600, 1)
-            
-            # Get all check-ins for this temple grouped by user
+            # Get all check-ins for this temple grouped by user with rank
             user_checkins = UserTempleCheckin.objects.filter(
                 temple_id=temple_id
             ).values(
@@ -434,11 +432,18 @@ class GetUserTempleCheckIn(APIView):
                 checkin_count=Count('id')
             ).order_by('-checkin_count')
             
-            serializer = UserTempleCheckinSerializer(checkin)
+            # Add rank to each user's check-in count
+            ranked_checkins = []
+            for rank, checkin in enumerate(user_checkins, start=1):
+                checkin['rank'] = rank
+                ranked_checkins.append(checkin)
+            
+            serializer = UserTempleCheckinSerializer(recent_checkin)
+
             return Response({
                 "data": {
                     "user": serializer.data,
-                    "checkin_counts": list(user_checkins),
+                    "checkin_counts": ranked_checkins,
                     "checkin_enabled": not bool(recent_checkin),
                     "last_checkin_time": recent_checkin.checkin_time if recent_checkin else None,
                     "next_checkin_available_after": hours_remaining
@@ -455,10 +460,16 @@ class GetUserTempleCheckIn(APIView):
                 checkin_count=Count('id')
             ).order_by('-checkin_count')
             
+            # Add rank to each user's check-in count
+            ranked_checkins = []
+            for rank, checkin in enumerate(user_checkins, start=1):
+                checkin['rank'] = rank
+                ranked_checkins.append(checkin)
+            
             return Response({
                 "data": {
                     "user": None,
-                    "checkin_counts": list(user_checkins),
+                    "checkin_counts": ranked_checkins,
                     "checkin_enabled": True,
                     "last_checkin_time": None,
                     "next_checkin_available_after": None
