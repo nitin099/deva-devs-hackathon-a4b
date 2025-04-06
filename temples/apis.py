@@ -410,6 +410,31 @@ class GetUserTempleCheckIn(APIView):
                 temple_id=temple_id
             )
             
+            # Get temple coordinates
+            temple = checkin.temple
+            
+            # Get user's current location from query params
+            user_lat = request.query_params.get('lat')
+            user_lng = request.query_params.get('lng')
+            
+            # Check if user is within 200 meters of temple
+            is_within_range = False
+            distance_message = None
+            if user_lat and user_lng:
+                try:
+                    user_lat = float(user_lat)
+                    user_lng = float(user_lng)
+                    distance = calculate_distance(
+                        user_lat, user_lng,
+                        temple.lat, temple.lng
+                    )
+                    # Convert 200 meters to kilometers (0.2 km)
+                    is_within_range = distance <= 0.2
+                    if not is_within_range:
+                        distance_message = f"You are {round(distance * 1000)} meters away from the temple. Please come within 200 meters to check in."
+                except (ValueError, TypeError):
+                    distance_message = "Invalid location coordinates provided."
+            
             # Check if user has checked in within last 6 hours
             six_hours_ago = timezone.now() - timedelta(hours=6)
             recent_checkin = UserTempleCheckin.objects.filter(
@@ -417,11 +442,13 @@ class GetUserTempleCheckIn(APIView):
                 temple_id=temple_id,
                 checkin_time__gte=six_hours_ago
             ).first()
+            
             # Calculate hours remaining until next check-in
             hours_remaining = None
             if recent_checkin:
                 next_checkin_time = recent_checkin.checkin_time + timedelta(hours=6)
                 hours_remaining = round((next_checkin_time - timezone.now()).total_seconds() / 3600, 1)
+            
             # Get all check-ins for this temple grouped by user with rank
             user_checkins = UserTempleCheckin.objects.filter(
                 temple_id=temple_id
@@ -444,9 +471,11 @@ class GetUserTempleCheckIn(APIView):
                 "data": {
                     "user": serializer.data,
                     "checkin_counts": ranked_checkins,
-                    "checkin_enabled": not bool(recent_checkin),
+                    "checkin_enabled": not bool(recent_checkin) and is_within_range,
                     "last_checkin_time": recent_checkin.checkin_time if recent_checkin else None,
-                    "next_checkin_available_after": hours_remaining
+                    "next_checkin_available_after": hours_remaining,
+                    "is_within_range": is_within_range,
+                    "distance_message": distance_message
                 }
             })
         except Exception as e:
@@ -466,13 +495,40 @@ class GetUserTempleCheckIn(APIView):
                 checkin['rank'] = rank
                 ranked_checkins.append(checkin)
             
+            # Get temple coordinates
+            temple = get_object_or_404(Temple, pk=temple_id)
+            
+            # Get user's current location from query params
+            user_lat = request.query_params.get('lat')
+            user_lng = request.query_params.get('lng')
+            
+            # Check if user is within 200 meters of temple
+            is_within_range = False
+            distance_message = None
+            if user_lat and user_lng:
+                try:
+                    user_lat = float(user_lat)
+                    user_lng = float(user_lng)
+                    distance = calculate_distance(
+                        user_lat, user_lng,
+                        temple.lat, temple.lng
+                    )
+                    # Convert 200 meters to kilometers (0.2 km)
+                    is_within_range = distance <= 0.2
+                    if not is_within_range:
+                        distance_message = f"You are {round(distance * 1000)} meters away from the temple. Please come within 200 meters to check in."
+                except (ValueError, TypeError):
+                    distance_message = "Invalid location coordinates provided."
+            
             return Response({
                 "data": {
                     "user": None,
                     "checkin_counts": ranked_checkins,
-                    "checkin_enabled": True,
+                    "checkin_enabled": is_within_range,
                     "last_checkin_time": None,
-                    "next_checkin_available_after": None
+                    "next_checkin_available_after": None,
+                    "is_within_range": is_within_range,
+                    "distance_message": distance_message
                 }
             }, status=status.HTTP_200_OK)
 

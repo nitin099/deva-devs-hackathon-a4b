@@ -45,12 +45,7 @@ class LocationSerializer(serializers.ModelSerializer):
 
 class TempleSerializer(serializers.ModelSerializer):
     distance = serializers.FloatField(required=False)
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if data.get('raw_data') and isinstance(data['raw_data'], dict):
-            data['raw_data'] = None
-        return data
+    raw_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Temple
@@ -59,17 +54,38 @@ class TempleSerializer(serializers.ModelSerializer):
                  'created_at', 'updated_at', 'raw_data')
         read_only_fields = ('created_at', 'updated_at')
 
+    def get_raw_data(self, obj):
+        raw_data = obj.raw_data
+        if raw_data is None:
+            return []
+        if isinstance(raw_data, dict):
+            return [raw_data]
+        if isinstance(raw_data, list):
+            return raw_data
+        return []
+
 
 class UserTempleCheckinSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     temple = serializers.PrimaryKeyRelatedField(queryset=Temple.objects.all())
     user_name = serializers.CharField(source='user.name', read_only=True)
     temple_name = serializers.CharField(source='temple.name', read_only=True)
+    temple_raw_data = serializers.SerializerMethodField()
 
     class Meta:
         model = UserTempleCheckin
-        fields = ('id', 'user', 'user_name', 'temple', 'temple_name', 'checkin_time', 'created_at', 'updated_at')
+        fields = ('id', 'user', 'user_name', 'temple', 'temple_name', 'checkin_time', 'created_at', 'updated_at', 'temple_raw_data')
         read_only_fields = ('created_at', 'updated_at', 'checkin_time')
+
+    def get_temple_raw_data(self, obj):
+        raw_data = obj.temple.raw_data
+        if raw_data is None:
+            return []
+        if isinstance(raw_data, dict):
+            return [raw_data]
+        if isinstance(raw_data, list):
+            return raw_data
+        return []
 
 
 class ReelsSerializer(serializers.ModelSerializer):
